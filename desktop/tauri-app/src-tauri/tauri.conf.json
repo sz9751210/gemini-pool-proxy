@@ -1,0 +1,27 @@
+{
+  "$schema": "https://schema.tauri.app/config/2",
+  "productName": "Gemini Balance Desktop",
+  "version": "0.1.0",
+  "identifier": "com.gemini.balance.desktop",
+  "build": {
+    "beforeDevCommand": "npm run dev",
+    "beforeBuildCommand": "npm run build",
+    "devUrl": "http://localhost:1420",
+    "frontendDist": "../dist"
+  },
+  "app": {
+    "windows": [
+      {
+        "label": "main",
+        "title": "Gemini Balance Desktop",
+        "width": 1300,
+        "height": 860
+      }
+    ]
+  },
+  "bundle": {
+    "active": true,
+    "targets": "dmg",
+    "createUpdaterArtifacts": false
+  }
+}
