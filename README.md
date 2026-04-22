@@ -164,6 +164,8 @@ To keep this repo lean, detailed instructions and specifications are housed in t
 - ⚙️ **[Configuration Guide](docs/configuration.md)**: Comprehensive explanation of all `.env` parameters (Model pools, timeouts, capabilities).
 - 🧭 **[Unified API Standard](docs/unified-api-standard-zh.md)**: Canonical API/auth/model alias contract for multi-provider routing.
 - 📖 **[Beginner's Guide](docs/beginner-guide.md)**: A step-by-step guide to run your proxy instance within 5 minutes.
+- ⚡ **[Hermes/OpenClaw Quickstart](docs/hermes-openclaw-setup-quickstart.md)**: Copy-paste onboarding for team members.
+- 🤖 **[Hermes/OpenClaw Integration Guide](docs/hermes-openclaw-setup.md)**: Full English setup and troubleshooting guide.
 - 🤖 **[Hermes/OpenClaw Integration Guide (ZH)](docs/hermes-openclaw-setup-zh.md)**: Practical setup flow using a unified `/v1` entrypoint.
 - 🏗️ **[Architecture Overview](docs/architecture.md)**: Deep dive into the Rust (Gateway) + Tauri (Frontend) component interaction.
 
