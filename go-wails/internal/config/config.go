@@ -8,14 +8,18 @@ import (
 )
 
 type AppConfig struct {
-	AuthToken     string
-	AllowedTokens []string
-	APIKeys       []string
-	BindHost      string
-	PortStart     int
-	PortEnd       int
-	PoolStrategy  string
-	ModelPools    map[string][]string
+	AuthToken         string
+	AllowedTokens     []string
+	APIKeys           []string
+	BindHost          string
+	PortStart         int
+	PortEnd           int
+	PoolStrategy      string
+	ModelPools        map[string][]string
+	MaxFailures       int
+	CooldownSeconds   int
+	ModelPoolStrategy string
+	ModelPoolScope    string
 }
 
 func LoadFromEnv(env map[string]string) (AppConfig, error) {
@@ -31,15 +35,27 @@ func LoadFromEnv(env map[string]string) (AppConfig, error) {
 	if err != nil {
 		return AppConfig{}, fmt.Errorf("invalid MODEL_POOLS: %w", err)
 	}
+	maxFailures, err := atoiDefault(env["MAX_FAILURES"], 3)
+	if err != nil {
+		return AppConfig{}, fmt.Errorf("invalid MAX_FAILURES: %w", err)
+	}
+	cooldownSecs, err := atoiDefault(env["COOLDOWN_SECONDS"], 60)
+	if err != nil {
+		return AppConfig{}, fmt.Errorf("invalid COOLDOWN_SECONDS: %w", err)
+	}
 	return AppConfig{
-		AuthToken:     valueOr(env["AUTH_TOKEN"], "sk-admin-demo"),
-		AllowedTokens: parseArray(valueOr(env["ALLOWED_TOKENS"], "sk-user-demo")),
-		APIKeys:       parseArray(valueOr(env["API_KEYS"], "")),
-		BindHost:      valueOr(env["RUNTIME_BIND_HOST"], "127.0.0.1"),
-		PortStart:     start,
-		PortEnd:       end,
-		PoolStrategy:  valueOr(env["POOL_STRATEGY"], "round_robin"),
-		ModelPools:    modelPools,
+		AuthToken:         valueOr(env["AUTH_TOKEN"], "sk-admin-demo"),
+		AllowedTokens:     parseArray(valueOr(env["ALLOWED_TOKENS"], "sk-user-demo")),
+		APIKeys:           parseArray(valueOr(env["API_KEYS"], "")),
+		BindHost:          valueOr(env["RUNTIME_BIND_HOST"], "127.0.0.1"),
+		PortStart:         start,
+		PortEnd:           end,
+		PoolStrategy:      valueOr(env["POOL_STRATEGY"], "round_robin"),
+		ModelPools:        modelPools,
+		MaxFailures:       maxFailures,
+		CooldownSeconds:   cooldownSecs,
+		ModelPoolStrategy: valueOr(env["MODEL_POOL_STRATEGY"], "round_robin"),
+		ModelPoolScope:    valueOr(env["MODEL_POOL_SCOPE"], "global"),
 	}, nil
 }
 

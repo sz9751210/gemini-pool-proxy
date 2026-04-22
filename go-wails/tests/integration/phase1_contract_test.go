@@ -21,7 +21,7 @@ func TestContract_ModelsRouteExists(t *testing.T) {
 	}
 	mgr := runtime.NewManager(cfg)
 	adminH := admin.NewHandler(mgr, ".env.test")
-	proxyH := proxy.NewHandler(cfg, &integrationClient{})
+	proxyH := proxy.NewHandler(cfg, &integrationClient{}, mgr)
 	r := server.NewRouter(adminH, proxyH)
 
 	ts := httptest.NewServer(r)

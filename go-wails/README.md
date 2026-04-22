@@ -21,3 +21,11 @@ cd go-wails
 rtk go test ./...
 rtk bash scripts/smoke-phase1.sh
 ```
+
+## Phase 2 Verify
+
+```bash
+cd go-wails
+rtk go test ./...
+rtk bash scripts/smoke-phase2.sh
+```

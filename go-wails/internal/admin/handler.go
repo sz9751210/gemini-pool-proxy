@@ -3,6 +3,8 @@ package admin
 import (
 	"encoding/json"
 	"net/http"
+	"strconv"
+	"time"
 
 	"github.com/alan/gemini-pool-proxy/go-wails/internal/config"
 	"github.com/alan/gemini-pool-proxy/go-wails/internal/runtime"
@@ -84,4 +86,57 @@ func (h *Handler) Start(w http.ResponseWriter, r *http.Request) {
 func (h *Handler) Stop(w http.ResponseWriter, r *http.Request) {
 	_ = h.mgr.Stop()
 	_ = json.NewEncoder(w).Encode(map[string]any{"ok": true})
+}
+
+func (h *Handler) DashboardOverview(w http.ResponseWriter, r *http.Request) {
+	now := time.Now()
+	_ = json.NewEncoder(w).Encode(h.mgr.Metrics().DashboardOverview(now))
+}
+
+func (h *Handler) Logs(w http.ResponseWriter, r *http.Request) {
+	limit := parseIntQuery(r, "limit", 20)
+	offset := parseIntQuery(r, "offset", 0)
+	_ = json.NewEncoder(w).Encode(map[string]any{
+		"logs":   h.mgr.Metrics().Logs(limit, offset),
+		"limit":  limit,
+		"offset": offset,
+	})
+}
+
+func (h *Handler) PoolStatus(w http.ResponseWriter, r *http.Request) {
+	_ = json.NewEncoder(w).Encode(map[string]any{
+		"strategy": h.mgr.KeyPool().Strategy(),
+		"keys":     h.mgr.KeyPool().Snapshot(),
+	})
+}
+
+func (h *Handler) UpdatePoolStrategy(w http.ResponseWriter, r *http.Request) {
+	var body struct {
+		Strategy string `json:"strategy"`
+	}
+	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+	if body.Strategy == "" {
+		http.Error(w, "strategy required", http.StatusBadRequest)
+		return
+	}
+	h.mgr.SetPoolStrategy(body.Strategy)
+	_ = json.NewEncoder(w).Encode(map[string]any{
+		"ok":       true,
+		"strategy": body.Strategy,
+	})
+}
+
+func parseIntQuery(r *http.Request, key string, fallback int) int {
+	raw := r.URL.Query().Get(key)
+	if raw == "" {
+		return fallback
+	}
+	v, err := strconv.Atoi(raw)
+	if err != nil {
+		return fallback
+	}
+	return v
 }
