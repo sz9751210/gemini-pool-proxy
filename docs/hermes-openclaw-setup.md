@@ -1,48 +1,48 @@
-# Hermes Agent 與 OpenClaw 接入指南（統一 `/v1`）
+# Hermes Agent and OpenClaw Integration Guide (Unified `/v1`)
 
-本文件提供一套可直接落地的接入流程，讓 **Hermes Agent** 與 **OpenClaw** 使用同一組 Proxy 設定。
+This guide provides a practical setup path so **Hermes Agent** and **OpenClaw** can share the same proxy configuration.
 
-- 統一入口：`http://127.0.0.1:18080/v1`
-- 統一驗證：`Authorization: Bearer <proxy_token>`
-- 模型建議：先用 alias（例如 `claude-sonnet`）
+- Unified endpoint: `http://127.0.0.1:18080/v1`
+- Unified auth: `Authorization: Bearer <proxy_token>`
+- Recommended model usage: start with an alias (for example `claude-sonnet`)
 
-## 0. 先確認 Proxy 可用
+## 0. Verify Proxy Availability First
 
-啟動（無頭模式）：
+Start the runtime (headless):
 
 ```bash
 ./start-headless.sh
 ```
 
-快速驗證（建議）：
+Run quick verification:
 
 ```bash
 ./scripts/quick-verify-api.sh
 ```
 
-判讀原則：
-- `/v1/models` 需為 `200`。
-- `/v1/chat/completions` 允許 `200`、`429`、`503`（配額或高流量）。
-- `/v1beta` 若可 `200`，代表原生 Gemini 通道可用。
+Interpretation:
+- `/v1/models` should be `200`.
+- `/v1/chat/completions` can be `200`, `429`, or `503` (quota/high-demand cases).
+- If `/v1beta` is `200`, native Gemini passthrough is working.
 
-若你使用 Docker/Compose 部署，建議改用一鍵容器驗證：
+If you deploy with Docker/Compose, use one-command container verification:
 
 ```bash
 ./scripts/docker-smoke-api.sh
 ```
 
-## 1. Hermes Agent 設定
+## 1. Hermes Agent Setup
 
-### 1.1 基本設定（推薦）
+### 1.1 Base config (recommended)
 
-在 `~/.hermes/.env` 新增：
+Add to `~/.hermes/.env`:
 
 ```dotenv
 GEMINI_API_KEY=sk-user-123456
 GEMINI_BASE_URL=http://127.0.0.1:18080/v1
 ```
 
-設定 Hermes 預設 provider 與模型：
+Set default provider and model:
 
 ```bash
 hermes config set model.provider gemini
@@ -50,21 +50,21 @@ hermes config set model.base_url http://127.0.0.1:18080/v1
 hermes config set model.default claude-sonnet
 ```
 
-### 1.2 清理舊憑證（建議）
+### 1.2 Clean old credentials (recommended)
 
-若過去曾指向官方 Gemini 端點，先檢查：
+If Hermes previously pointed to the official Gemini endpoint:
 
 ```bash
 hermes auth list
 ```
 
-移除舊憑證後再重開 Hermes：
+Remove old entries and restart Hermes:
 
 ```bash
 hermes auth remove gemini <index|id|label>
 ```
 
-### 1.3 驗證 Hermes 連線
+### 1.3 Validate Hermes routing
 
 ```bash
 GEMINI_API_KEY=sk-user-123456 \
@@ -72,13 +72,13 @@ GEMINI_BASE_URL=http://127.0.0.1:18080/v1 \
 hermes chat -q "Reply with token HERMES_DOC_OK only" --provider gemini -m claude-sonnet -Q
 ```
 
-看到 `HERMES_DOC_OK` 即代表 Hermes 已走本地 Proxy。
+If you see `HERMES_DOC_OK`, Hermes is correctly routed through local proxy.
 
-## 2. OpenClaw 設定
+## 2. OpenClaw Setup
 
-此處以常見 `~/.picoclaw/config.json`（OpenClaw/PicoClaw 相容格式）為例。
+Using common `~/.picoclaw/config.json` format (OpenClaw/PicoClaw compatible):
 
-### 2.1 建議設定（openai provider + `/v1`）
+### 2.1 Recommended config (`openai` provider + `/v1`)
 
 ```json
 {
@@ -96,7 +96,7 @@ hermes chat -q "Reply with token HERMES_DOC_OK only" --provider gemini -m claude
 }
 ```
 
-### 2.2 用 `jq` 快速改檔（可選）
+### 2.2 Quick patch with `jq` (optional)
 
 ```bash
 cp ~/.picoclaw/config.json ~/.picoclaw/config.json.bak
@@ -108,9 +108,9 @@ jq '
 ' ~/.picoclaw/config.json > /tmp/picoclaw.config.json && mv /tmp/picoclaw.config.json ~/.picoclaw/config.json
 ```
 
-修改後請重啟 OpenClaw。
+Restart OpenClaw after editing.
 
-## 3. API 最小驗證
+## 3. Minimal API Validation
 
 ### 3.1 `/v1/models`
 
@@ -131,7 +131,7 @@ curl -sS http://127.0.0.1:18080/v1/chat/completions \
   }'
 ```
 
-### 3.3 `/v1beta`（原生 Gemini 通道）
+### 3.3 `/v1beta` (native Gemini path)
 
 ```bash
 curl -sS http://127.0.0.1:18080/v1beta/models/gemini-2.5-flash:generateContent \
@@ -142,16 +142,16 @@ curl -sS http://127.0.0.1:18080/v1beta/models/gemini-2.5-flash:generateContent \
   }'
 ```
 
-## 4. 常見問題與排查
+## 4. Troubleshooting
 
-1. `/v1/models` 是 `200`，但 chat 偶發 `400 API key expired`
-- 代表 key pool 內可能混有過期 key，輪到該 key 時就會失敗。
-- 請更新 `.env` 的 `API_KEYS`，移除過期 key，重啟服務後再測。
+1. `/v1/models` is `200`, but chat intermittently returns `400 API key expired`
+- Your key pool likely contains expired keys.
+- Remove expired keys from `.env` `API_KEYS`, restart, then test again.
 
 2. `Missing or invalid Authorization header`
-- 確認 base URL 為 `http://127.0.0.1:18080/v1`（不可少 `/v1`）。
-- 確認 token 在 `.env` 的 `ALLOWED_TOKENS`。
+- Verify base URL is `http://127.0.0.1:18080/v1` (must include `/v1`).
+- Verify token exists in `.env` `ALLOWED_TOKENS`.
 
 3. `429` / `503`
-- 多半是上游配額或高流量，不是本地路由故障。
-- 可改用其他 alias，或稍後重試。
+- Usually upstream quota/high-demand, not local route failure.
+- Retry later or switch alias/model.

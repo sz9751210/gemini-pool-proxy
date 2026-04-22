@@ -86,6 +86,7 @@ NATIVE_MODEL=gemini-2.5-flash \
 ./scripts/quick-verify-api.sh
 ```
 若聊天/原生測試回傳 `429` 或 `503`，腳本會標記為 warning（上游配額或高流量），不代表本地 proxy 壞掉。
+若 `/v1/models` 為 `200`，但 chat 偶發 `400 API key expired`，代表 key pool 可能混有過期 key；請更新 `.env` 的 `API_KEYS` 後重啟。
 
 ### 5.1 查詢支援的模型清單
 ```bash
@@ -128,6 +129,28 @@ curl -sS http://127.0.0.1:18080/v1beta/models/gemini-2.5-flash:generateContent \
 ```
 相容說明：舊客戶端仍可使用 `x-api-key`、`x-goog-api-key`、`?key=`。
 
+### 5.5 Docker 建立 + 簡易 API Smoke
+若你希望走容器化驗證流程，可直接執行：
+
+```bash
+./scripts/docker-smoke-api.sh
+```
+
+腳本會自動執行：
+1. `docker compose build go-wails-headless`
+2. `docker compose up -d go-wails-headless`
+3. 驗證：
+   - `GET /api/v1/health` => `200`
+   - `GET /v1/models` => `200`
+   - `POST /v1/chat/completions` => `200/400/429/503` 其一
+
+常用覆寫：
+```bash
+PROXY_TOKEN=sk-user-demo MODEL=gemini-2.5-flash ./scripts/docker-smoke-api.sh
+START_COMPOSE=0 BASE_URL=http://127.0.0.1:18180 PROXY_TOKEN=sk-user-123456 ./scripts/docker-smoke-api.sh
+CLEANUP=1 ./scripts/docker-smoke-api.sh
+```
+
 ## 6. 常見問題 (FAQ)
 
 ### Q1: 登入一直失敗，被回傳 401？
@@ -148,5 +171,15 @@ curl -sS http://127.0.0.1:18080/v1beta/models/gemini-2.5-flash:generateContent \
 4. 僅在客戶端必須使用 Gemini 原生端點時，再改用 `/v1beta`。  
 
 ## 8. Hermes / OpenClaw 快速導引
-若您是用本機 Agent 工具串接，請直接參考：
+兩個客戶端都建議共用同一個設定：
+- Base URL：`http://127.0.0.1:18080/v1`
+- Token：`Authorization: Bearer <ALLOWED_TOKENS 其中之一>`
+- 模型：先用 alias（例如 `claude-sonnet`）
+
+最小檢查順序：
+1. 先確認 `curl /v1/models` 是 `200`。
+2. 再測 `curl /v1/chat/completions` 是否至少可回 `200/429/503`。
+3. 若 `/v1/models=200` 但 chat 偶發 `400 API key expired`，請更新 `.env` 的 `API_KEYS`（移除過期 key）並重啟。
+
+完整設定步驟請看：
 - [Hermes Agent 與 OpenClaw 接入指南](hermes-openclaw-setup-zh.md)

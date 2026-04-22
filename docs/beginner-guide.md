@@ -86,6 +86,7 @@ NATIVE_MODEL=gemini-2.5-flash \
 ./scripts/quick-verify-api.sh
 ```
 If chat/native checks return `429` or `503`, the script reports a warning (upstream quota/high-demand), not a local proxy breakage.
+If `/v1/models` is `200` but chat intermittently returns `400 API key expired`, your key pool likely contains expired keys. Update `.env` `API_KEYS` and restart.
 
 ### 5.1 Retrieve Available Models
 ```bash
@@ -128,6 +129,28 @@ curl -sS http://127.0.0.1:18080/v1beta/models/gemini-2.5-flash:generateContent \
 ```
 Compatibility note: `x-api-key`, `x-goog-api-key`, and query `?key=` are still accepted for legacy clients.
 
+### 5.5 Docker Build + Simple API Smoke
+Use this when you want a repeatable container-first verification path.
+
+```bash
+./scripts/docker-smoke-api.sh
+```
+
+What it does:
+1. `docker compose build go-wails-headless`
+2. `docker compose up -d go-wails-headless`
+3. Verifies:
+   - `GET /api/v1/health` => `200`
+   - `GET /v1/models` => `200`
+   - `POST /v1/chat/completions` => one of `200,400,429,503`
+
+Useful overrides:
+```bash
+PROXY_TOKEN=sk-user-demo MODEL=gemini-2.5-flash ./scripts/docker-smoke-api.sh
+START_COMPOSE=0 BASE_URL=http://127.0.0.1:18180 PROXY_TOKEN=sk-user-123456 ./scripts/docker-smoke-api.sh
+CLEANUP=1 ./scripts/docker-smoke-api.sh
+```
+
 ## 6. FAQ (Frequently Asked Questions)
 
 ### Q1: Continuous 401 Unauthorized errors during Dashboard login?
@@ -141,6 +164,10 @@ Compatibility note: `x-api-key`, `x-goog-api-key`, and query `?key=` are still a
 - In general, this denotes an empty "Healthy Key" state (all your keys are either Invalid or hitting the CoolDown constraint).
 - Head to the `/keys` route on the dashboard, trace errors in your logs, and either Reset or replace the malfunctioning API keys manually.
 
+### Q4: Why does chat sometimes return `400 API key expired` while `/v1/models` still works?
+- Your key pool likely includes both valid and expired keys; rotation can hit an expired key intermittently.
+- Remove expired keys from `.env` `API_KEYS`, restart runtime, and run `./scripts/quick-verify-api.sh` again.
+
 ## 7. Recommended Routine Ops
 1. Regularly glance at the `/keys` health pool metric.
 2. If limited rate scenarios present, adjust rules and fallback options in the `/config` UI.
@@ -149,4 +176,5 @@ Compatibility note: `x-api-key`, `x-goog-api-key`, and query `?key=` are still a
 
 ## 8. Hermes / OpenClaw Quick Guide
 If you are connecting from local agent tools, see:
+- [Hermes/OpenClaw Integration Guide](hermes-openclaw-setup.md)
 - [Hermes/OpenClaw Integration Guide (Chinese)](hermes-openclaw-setup-zh.md)
