@@ -1,0 +1,19 @@
+services:
+  go-wails-headless:
+    build:
+      context: ./go-wails
+      dockerfile: Dockerfile
+    image: gemini-pool-proxy-go-wails:local
+    container_name: gemini-pool-proxy-go-wails
+    restart: unless-stopped
+    env_file:
+      - path: ./.env.example
+        required: true
+      - path: ./.env
+        required: false
+    environment:
+      RUNTIME_BIND_HOST: 0.0.0.0
+      RUNTIME_PORT_START: 18080
+      RUNTIME_PORT_END: 18080
+    ports:
+      - "18080:18080"
