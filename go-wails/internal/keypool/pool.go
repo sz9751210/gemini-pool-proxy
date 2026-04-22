@@ -116,6 +116,71 @@ func (p *Pool) Snapshot() []KeyState {
 	return out
 }
 
+func (p *Pool) ResetFailuresByIDs(ids []string) {
+	p.mu.Lock()
+	defer p.mu.Unlock()
+	if len(ids) == 0 {
+		return
+	}
+	target := make(map[string]struct{}, len(ids))
+	for _, id := range ids {
+		target[id] = struct{}{}
+	}
+	for i := range p.items {
+		if _, ok := target[p.items[i].ID]; !ok {
+			continue
+		}
+		p.items[i].FailureCount = 0
+		p.items[i].CooldownUntil = time.Time{}
+	}
+}
+
+func (p *Pool) RemoveByIDs(ids []string) {
+	p.mu.Lock()
+	defer p.mu.Unlock()
+	if len(ids) == 0 {
+		return
+	}
+	target := make(map[string]struct{}, len(ids))
+	for _, id := range ids {
+		target[id] = struct{}{}
+	}
+	nextItems := make([]KeyState, 0, len(p.items))
+	for _, item := range p.items {
+		if _, ok := target[item.ID]; ok {
+			continue
+		}
+		nextItems = append(nextItems, item)
+	}
+	p.items = nextItems
+	if len(p.items) == 0 {
+		p.next = 0
+		return
+	}
+	p.next %= len(p.items)
+}
+
+func (p *Pool) RawKeys() []string {
+	p.mu.Lock()
+	defer p.mu.Unlock()
+	out := make([]string, 0, len(p.items))
+	for _, item := range p.items {
+		out = append(out, item.RawKey)
+	}
+	return out
+}
+
+func (p *Pool) RawKeyByID(id string) (string, bool) {
+	p.mu.Lock()
+	defer p.mu.Unlock()
+	for _, item := range p.items {
+		if item.ID == id {
+			return item.RawKey, true
+		}
+	}
+	return "", false
+}
+
 func (p *Pool) recoverCooldown(now time.Time) {
 	for i := range p.items {
 		if p.items[i].CooldownUntil.IsZero() {

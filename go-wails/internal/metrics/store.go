@@ -149,3 +149,40 @@ func (s *Store) DashboardOverview(now time.Time) Overview {
 		RecentErrors:          recentErrors,
 	}
 }
+
+func (s *Store) UsageByKey(key, period string, now time.Time, resolveRawKey func(string) string) map[string]uint64 {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+
+	from := periodStart(period, now)
+	usage := map[string]uint64{}
+	for _, rec := range s.calls {
+		if rec.At.Before(from) {
+			continue
+		}
+		rawKey := ""
+		if resolveRawKey != nil {
+			rawKey = resolveRawKey(rec.KeyID)
+		}
+		if rec.KeyID != key && rawKey != key {
+			continue
+		}
+		usage[rec.Model]++
+	}
+	return usage
+}
+
+func periodStart(period string, now time.Time) time.Time {
+	switch period {
+	case "1h":
+		return now.Add(-1 * time.Hour)
+	case "8h":
+		return now.Add(-8 * time.Hour)
+	case "24h":
+		return now.Add(-24 * time.Hour)
+	case "month":
+		return now.Add(-30 * 24 * time.Hour)
+	default:
+		return now.Add(-24 * time.Hour)
+	}
+}

@@ -19,6 +19,8 @@ Scope: compare `core-rs` router (`core-rs/crates/gateway-server/src/routes.rs`) 
 - `GET|PUT /api/v1/config`
 - `GET /api/v1/keys`
 - `GET /api/v1/health`
+- `POST /api/v1/keys/actions`
+- `GET /api/v1/keys/usage/{key}`
 - `GET /api/v1/logs`
 - `GET /api/v1/dashboard/overview`
 - `GET /api/v1/pool/status`
@@ -31,8 +33,6 @@ Scope: compare `core-rs` router (`core-rs/crates/gateway-server/src/routes.rs`) 
 ### Keys / Stats
 
 - `GET /api/v1/keys/all`
-- `POST /api/v1/keys/actions`
-- `GET /api/v1/keys/usage/{key}`
 - `GET /api/v1/stats/details`
 - `GET /api/v1/stats/attention-keys`
 - `GET /api/v1/stats/key-details`
@@ -89,18 +89,18 @@ Rust has additional compatibility trees not yet present in Go-Wails:
   - Rust returns OpenAI-style error payloads for multiple failure classes.
   - Go-Wails still returns simpler `http.Error` plain text for many paths.
 - Key model in admin:
-  - Rust has richer key action workflows (`actions`, usage details, reset/cooldown operations).
-  - Go-Wails currently exposes summary list and pool status only.
+  - Rust has richer key action workflows (including more action targets and legacy alias coverage).
+  - Go-Wails now supports base `actions` and `usage` routes, but still lacks the full extended workflow surface.
 - Logs query surface:
   - Rust supports lookup/detail/delete and advanced filtering/sorting.
   - Go-Wails currently supports list endpoint with basic pagination.
 
 ## 5. Recommended Priority Order
 
-1. `POST /api/v1/keys/actions` + `GET /api/v1/keys/usage/{key}`
-2. `GET /api/v1/logs/lookup`, `GET /api/v1/logs/{id}`, delete APIs
-3. `GET /api/v1/config/schema` + config keys add/delete helpers
-4. `POST /api/v1/proxy/check*` and cache APIs
+1. `GET /api/v1/logs/lookup`, `GET /api/v1/logs/{id}`, delete APIs
+2. `GET /api/v1/config/schema` + config keys add/delete helpers
+3. `POST /api/v1/proxy/check*` and cache APIs
+4. `GET /api/v1/stats/*` family for operational analytics
 5. Optional legacy aliases (`/api/config/*`, `/api/compat/v1/*`, `/api/pro/*`)
 
 ## 6. Compatibility Assessment

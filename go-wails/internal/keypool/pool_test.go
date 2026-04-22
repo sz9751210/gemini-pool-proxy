@@ -45,3 +45,30 @@ func TestKeyPool_LeastFailPrefersLowerFailures(t *testing.T) {
 		t.Fatalf("expected k2, got %s", selected.RawKey)
 	}
 }
+
+func TestKeyPool_ResetFailuresByIDs(t *testing.T) {
+	now := time.Now()
+	p := NewPool([]string{"k1", "k2"}, 2, 60, "round_robin")
+	p.MarkFailure("k1", now)
+	p.MarkFailure("k1", now)
+	p.ResetFailuresByIDs([]string{"key-1"})
+	snapshot := p.Snapshot()
+	if snapshot[0].FailureCount != 0 {
+		t.Fatalf("expected key-1 failures reset, got %d", snapshot[0].FailureCount)
+	}
+	if !snapshot[0].CooldownUntil.IsZero() {
+		t.Fatalf("expected key-1 cooldown cleared")
+	}
+}
+
+func TestKeyPool_RemoveByIDs(t *testing.T) {
+	p := NewPool([]string{"k1", "k2", "k3"}, 3, 60, "round_robin")
+	p.RemoveByIDs([]string{"key-2"})
+	snapshot := p.Snapshot()
+	if len(snapshot) != 2 {
+		t.Fatalf("expected 2 keys after delete, got %d", len(snapshot))
+	}
+	if snapshot[0].RawKey != "k1" || snapshot[1].RawKey != "k3" {
+		t.Fatalf("unexpected remaining keys: %#v", snapshot)
+	}
+}

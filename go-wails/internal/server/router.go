@@ -17,6 +17,8 @@ func NewRouter(adminH *admin.Handler, proxyH *proxy.Handler) http.Handler {
 	r.Get("/api/v1/config", adminH.ConfigGet)
 	r.Put("/api/v1/config", adminH.ConfigPut)
 	r.Get("/api/v1/keys", adminH.KeysList)
+	r.Post("/api/v1/keys/actions", adminH.KeysActions)
+	r.Get("/api/v1/keys/usage/{key}", adminH.KeyUsage)
 	r.Get("/api/v1/health", adminH.Health)
 	r.Get("/api/v1/logs", adminH.Logs)
 	r.Get("/api/v1/dashboard/overview", adminH.DashboardOverview)
