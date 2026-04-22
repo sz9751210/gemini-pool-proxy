@@ -218,6 +218,7 @@ pyrightconfig.json
 !.vscode/settings.json
 !.vscode/tasks.json
 !.vscode/launch.json
+.worktrees/
 !.vscode/extensions.json
 !.vscode/*.code-snippets
 
