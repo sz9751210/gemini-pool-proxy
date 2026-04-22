@@ -26,3 +26,27 @@ func TestLoginAndSessionStatus(t *testing.T) {
 		t.Fatalf("expected 200, got %d", w.Code)
 	}
 }
+
+func TestDashboardOverviewRoute(t *testing.T) {
+	cfg := config.AppConfig{AuthToken: "sk-admin", APIKeys: []string{"k1"}}
+	mgr := runtime.NewManager(cfg)
+	h := NewHandler(mgr, ".env.test")
+	req := httptest.NewRequest(http.MethodGet, "/api/v1/dashboard/overview", nil)
+	w := httptest.NewRecorder()
+	h.DashboardOverview(w, req)
+	if w.Code != http.StatusOK {
+		t.Fatalf("expected 200, got %d", w.Code)
+	}
+}
+
+func TestLogsRoute(t *testing.T) {
+	cfg := config.AppConfig{AuthToken: "sk-admin", APIKeys: []string{"k1"}}
+	mgr := runtime.NewManager(cfg)
+	h := NewHandler(mgr, ".env.test")
+	req := httptest.NewRequest(http.MethodGet, "/api/v1/logs?limit=20&offset=0", nil)
+	w := httptest.NewRecorder()
+	h.Logs(w, req)
+	if w.Code != http.StatusOK {
+		t.Fatalf("expected 200, got %d", w.Code)
+	}
+}

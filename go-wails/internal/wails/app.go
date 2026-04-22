@@ -1,6 +1,8 @@
 package wails
 
 import (
+	"time"
+
 	"github.com/alan/gemini-pool-proxy/go-wails/internal/config"
 	"github.com/alan/gemini-pool-proxy/go-wails/internal/runtime"
 )
@@ -31,4 +33,19 @@ func (a *App) StartService() error {
 
 func (a *App) StopService() error {
 	return a.mgr.Stop()
+}
+
+func (a *App) GetDashboardOverview() any {
+	return a.mgr.Metrics().DashboardOverview(time.Now())
+}
+
+func (a *App) GetLogs(limit, offset int) any {
+	return a.mgr.Metrics().Logs(limit, offset)
+}
+
+func (a *App) GetPoolStatus() any {
+	return map[string]any{
+		"strategy": a.mgr.KeyPool().Strategy(),
+		"keys":     a.mgr.KeyPool().Snapshot(),
+	}
 }

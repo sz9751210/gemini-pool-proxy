@@ -1,0 +1,9 @@
+.git
+.worktrees
+node_modules
+ui/wails/frontend/node_modules
+ui/wails/frontend/dist
+tests
+scripts
+*.log
+tmp

@@ -45,3 +45,22 @@ func TestParseArray_AcceptsLooseAndJSON(t *testing.T) {
 		t.Fatalf("csv parse failed: %#v", b)
 	}
 }
+
+func TestLoadFromEnv_ParsesPhase2Fields(t *testing.T) {
+	env := map[string]string{
+		"MAX_FAILURES":        "5",
+		"COOLDOWN_SECONDS":    "90",
+		"MODEL_POOL_STRATEGY": "per_key_cycle",
+		"MODEL_POOL_SCOPE":    "global",
+	}
+	cfg, err := LoadFromEnv(env)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if cfg.MaxFailures != 5 || cfg.CooldownSeconds != 90 {
+		t.Fatalf("numeric fields mismatch: %#v", cfg)
+	}
+	if cfg.ModelPoolStrategy != "per_key_cycle" || cfg.ModelPoolScope != "global" {
+		t.Fatalf("strategy fields mismatch: %#v", cfg)
+	}
+}

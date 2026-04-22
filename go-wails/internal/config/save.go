@@ -16,14 +16,18 @@ func UpdateEnvFile(path string, cfg AppConfig) error {
 	lines := strings.Split(string(raw), "\n")
 
 	desired := map[string]string{
-		"AUTH_TOKEN":         cfg.AuthToken,
-		"ALLOWED_TOKENS":     mustJSON(cfg.AllowedTokens),
-		"API_KEYS":           mustJSON(cfg.APIKeys),
-		"RUNTIME_BIND_HOST":  cfg.BindHost,
-		"RUNTIME_PORT_START": fmt.Sprintf("%d", cfg.PortStart),
-		"RUNTIME_PORT_END":   fmt.Sprintf("%d", cfg.PortEnd),
-		"POOL_STRATEGY":      cfg.PoolStrategy,
-		"MODEL_POOLS":        mustJSON(cfg.ModelPools),
+		"AUTH_TOKEN":          cfg.AuthToken,
+		"ALLOWED_TOKENS":      mustJSON(cfg.AllowedTokens),
+		"API_KEYS":            mustJSON(cfg.APIKeys),
+		"RUNTIME_BIND_HOST":   cfg.BindHost,
+		"RUNTIME_PORT_START":  fmt.Sprintf("%d", cfg.PortStart),
+		"RUNTIME_PORT_END":    fmt.Sprintf("%d", cfg.PortEnd),
+		"POOL_STRATEGY":       cfg.PoolStrategy,
+		"MODEL_POOLS":         mustJSON(cfg.ModelPools),
+		"MAX_FAILURES":        fmt.Sprintf("%d", cfg.MaxFailures),
+		"COOLDOWN_SECONDS":    fmt.Sprintf("%d", cfg.CooldownSeconds),
+		"MODEL_POOL_STRATEGY": cfg.ModelPoolStrategy,
+		"MODEL_POOL_SCOPE":    cfg.ModelPoolScope,
 	}
 
 	seen := map[string]bool{}
